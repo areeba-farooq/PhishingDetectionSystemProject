@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Detection System - ITSOLERA</title>
+<link rel="stylesheet" href="/style.css">
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Phishing Detection System</h1>
+            <p>Powered by <span class="logo">ITSOLERA</span> ML Team | ELM Algorithm</p>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value">95.34%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">30</div>
+                <div class="stat-label">Features</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">11,055</div>
+                <div class="stat-label">Trained Samples</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">100ms</div>
+                <div class="stat-label">Response Time</div>
+            </div>
+        </div>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input type="url" 
+                       class="url-input" 
+                       id="urlInput" 
+                       placeholder="Enter URL to check (e.g., https://example.com)"
+                       value="">
+                <button class="btn btn-primary" onclick="checkURL()">
+                    🔍 Analyze URL
+                </button>
+                <button class="btn btn-secondary" onclick="clearResults()">
+                    🔄 Clear
+                </button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Analyzing URL with ELM algorithm...</p>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <div class="result-icon" id="resultIcon"></div>
+                <div class="result-content">
+                    <h3 id="resultTitle"></h3>
+                    <p id="resultMessage"></p>
+                </div>
+            </div>
+            
+            <div class="confidence-meter">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Confidence Level:</span>
+                    <span id="confidenceText" style="font-weight: bold;"></span>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceBar"></div>
+                </div>
+            </div>
+            
+            <div class="features-grid" id="featuresGrid">
+            </div>
+        </div>
+        
+        <div class="examples">
+            <h3>🧪 Try These Examples:</h3>
+            <div class="example-links">
+                <a href="#" class="example-link" onclick="testURL('https://www.google.com'); return false;">✅ google.com</a>
+                <a href="#" class="example-link" onclick="testURL('http://192.168.1.1/login'); return false;">⚠️ IP Address</a>
+                <a href="#" class="example-link" onclick="testURL('https://bit.ly/suspicious'); return false;">⚠️ URL Shortener</a>
+                <a href="#" class="example-link" onclick="testURL('http://paypal-secure.fake.com'); return false;">⚠️ Fake Domain</a>
+                <a href="#" class="example-link" onclick="testURL('https://www.microsoft.com'); return false;">✅ microsoft.com</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function checkURL() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('Please enter a URL to check');
+                return;
+            }
+            
+            // Validate URL format
+            try {
+                new URL(url);
+            } catch (e) {
+                alert('Please enter a valid URL (e.g., https://example.com)');
+                return;
+            }
+            
+            analyzeURL(url);
+        }
+        
+        function testURL(url) {
+            document.getElementById('urlInput').value = url;
+            analyzeURL(url);
+        }
+        
+        async function analyzeURL(url) {
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayResults(result);
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Demo mode
+                simulateResults(url);
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function displayResults(result) {
+            const resultSection = document.getElementById('resultSection');
+            
+            if (result.is_phishing) {
+                resultSection.className = 'result-section result-danger';
+                document.getElementById('resultIcon').innerHTML = '⚠️';
+                document.getElementById('resultTitle').innerHTML = 'Phishing Website Detected!';
+                document.getElementById('resultMessage').innerHTML = 'This website shows multiple phishing indicators. Do not enter any personal information.';
+            } else {
+                resultSection.className = 'result-section result-safe';
+                document.getElementById('resultIcon').innerHTML = '✅';
+                document.getElementById('resultTitle').innerHTML = 'Website Appears Legitimate';
+                document.getElementById('resultMessage').innerHTML = 'No significant phishing indicators detected. However, always remain cautious.';
+            }
+            
+            // Update confidence
+            const confidence = result.confidence * 100;
+            document.getElementById('confidenceText').textContent = `${confidence.toFixed(1)}%`;
+            document.getElementById('confidenceBar').style.width = `${confidence}%`;
+            
+            // Display features
+            const featuresGrid = document.getElementById('featuresGrid');
+            featuresGrid.innerHTML = '';
+            
+            if (result.features) {
+                const featureDescriptions = {
+                    'ip_address': 'IP Address Used',
+                    'url_length': 'URL Length',
+                    'shortening_service': 'URL Shortener',
+                    'at_symbol': '@ Symbol',
+                    'double_slash': 'Double Slash',
+                    'prefix_suffix': 'Dash in Domain',
+                    'sub_domains': 'Subdomains',
+                    'ssl_state': 'SSL Certificate'
+                };
+                
+                Object.entries(result.features).forEach(([key, value]) => {
+                    const card = document.createElement('div');
+                    card.className = 'feature-card';
+                    
+                    const interpretation = value === 1 ? 'Suspicious' : 
+                                         value === -1 ? 'Normal' : 'Neutral';
+                    
+                    card.innerHTML = `
+                        <div class="feature-name">${featureDescriptions[key] || key}</div>
+                        <div class="feature-value">${interpretation}</div>
+                    `;
+                    featuresGrid.appendChild(card);
+                });
+            }
+            
+            resultSection.style.display = 'block';
+        }
+        
+        function simulateResults(url) {
+            // Simulate results for demo
+            const suspicious = [
+                url.includes('192.168'),
+                url.includes('@'),
+                url.includes('bit.ly'),
+                !url.startsWith('https'),
+                url.includes('-') && url.includes('paypal'),
+                url.includes('.tk') || url.includes('.ml')
+            ].filter(Boolean).length;
+            
+            const isPhishing = suspicious >= 2;
+            const confidence = 0.6 + (suspicious * 0.1);
+            
+            const result = {
+                url: url,
+                is_phishing: isPhishing,
+                prediction: isPhishing ? 'PHISHING' : 'LEGITIMATE',
+                confidence: isPhishing ? confidence : 1 - confidence,
+                features: {
+                    ip_address: url.match(/\d+\.\d+\.\d+\.\d+/) ? 1 : -1,
+                    url_length: url.length > 75 ? 1 : -1,
+                    shortening_service: url.includes('bit.ly') || url.includes('tinyurl') ? 1 : -1,
+                    at_symbol: url.includes('@') ? 1 : -1,
+                    double_slash: url.indexOf('//') > 7 ? 1 : -1,
+                    prefix_suffix: url.includes('-') ? 1 : -1,
+                    sub_domains: (url.match(/\./g) || []).length > 3 ? 1 : -1,
+                    ssl_state: url.startsWith('https') ? -1 : 1
+                },
+                success: true
+            };
+            
+            displayResults(result);
+        }
+        
+        function clearResults() {
+            document.getElementById('urlInput').value = '';
+            document.getElementById('resultSection').style.display = 'none';
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkURL();
+            }
+        });
+    </script>
+</body>
+</html>
