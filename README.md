@@ -27,6 +27,13 @@ python web_app.py
 ```
 Then open http://localhost:5000 in your browser.
 
+## WEB UI
+![Image](https://github.com/user-attachments/assets/c5864556-7663-444c-b94f-46bb25e6c40f)
+
+![Image](https://github.com/user-attachments/assets/cc38693a-678b-4c58-9a95-b8f54a071f51)
+
+![Image](https://github.com/user-attachments/assets/0c1bfb7b-2f38-494a-9eb8-6bc02766bb1e)
+
 ## 📁 Project Structure
 ```
 phishing-detection-project/
